@@ -1,0 +1,48 @@
+django
+requests
+django-browser-reload
+
+
+
+2. Recarga automática del navegador (Live Reload con django-browser-reload)
+
+Para lograr que el navegador se actualice solo cuando cambias código Python, plantillas (.html) o archivos estáticos (.css, .js), la herramienta estándar recomendada es django-browser-reload.
+
+Pasos de configuración:
+
+1. Instalar el paquete mediante pip:bash
+python -m pip install django-browser-reload
+Usa el código con precaución.
+2. Agregar a INSTALLED_APPS en tu archivo settings.py:python
+INSTALLED_APPS = [
+    # ...
+    "django_browser_reload",
+]
+Usa el código con precaución.
+3. Agregar el Middleware en settings.py (debe ir después de los de sesión, autenticación y mensajes):python
+MIDDLEWARE = [
+    # ...
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
+]
+Usa el código con precaución.
+4. Incluir las rutas en el archivo principal urls.py:python
+from django.urls import include, path
+
+urlpatterns = [
+    # ...
+    path("__reload__/", include("django_browser_reload.urls")),
+]
+Usa el código con precaución.
+5. Añadir la etiqueta en tu plantilla base (usualmente antes del cierre de la etiqueta </body>):django
+{% load django_browser_reload %}
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Tus estilos -->
+</head>
+<body>
+    <!-- Tu contenido -->
+    {% django_browser_reload_script %}
+</body>
+</html>
+Usa el código con precaución.

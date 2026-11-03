@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<main>
+    <h2 class="mb-4">Catálogo de Productos Tecnológicos</h2>
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="card-img-top">
+                    <span class="badge bg-secondary mb-2">{{ product.category }}</span>
+                    <p class="h5 card-title">{{ product.name }}</p>
+                    <p class="card-text text-muted">{{ product.description }}</p>
+                    <p class="h6 text-success">${{ product.price }}</p>
+                    <small class="text-muted">Stock disponible: {{ product.stock }}</small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No hay productos disponibles en este momento o la API está desconectada.</p>
+        {% endfor %}
+    </div>
+</main>
+{% endblock %}
