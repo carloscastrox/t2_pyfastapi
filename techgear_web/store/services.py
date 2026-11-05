@@ -22,6 +22,7 @@ def register_user(user_data):
             "password": user_data["password"]
         }
         response = requests.post(f"{API_URL}/users", json=payload)
+        print(response.status_code, response.text)
         return response.status_code == 201
     except requests.exceptions.RequestException:
         return False
