@@ -1,7 +1,7 @@
 django
 requests
 django-browser-reload
-
+whitenoise
 
 
 # 2. Recarga automática del navegador (Live Reload con django-browser-reload)
