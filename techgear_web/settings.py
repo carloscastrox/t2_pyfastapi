@@ -29,7 +29,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     't2-pyfastapi.vercel.app', # Deploy Django on Vercel
-    't2-pyfastapi.onrender.com' # Deploy Fastapi on Render
+    'https://t2-pyfastapi.onrender.com' # Deploy Fastapi on Render
 ]
 
 
