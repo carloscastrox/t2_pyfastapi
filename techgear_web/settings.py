@@ -78,6 +78,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'wsgi.application'
 
 
+# Configuración del motor de sesiones para entornos serverless (Vercel)
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = True  # O True si ya usas HTTPS en producción
+
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
