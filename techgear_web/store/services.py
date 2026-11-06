@@ -45,3 +45,21 @@ def create_product(product_data, token):
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.post(f"{API_URL}/products", json=product_data, headers=headers)
     return response.status_code == 201
+
+def create_order(items_data, token):
+    """Envía la lista de items y cantidades para crear un pedido en FastAPI (requiere token)"""
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        response = requests.post(f"{API_URL}/orders", json=items_data, headers=headers)
+        return response.status_code == 201
+    except requests.exceptions.RequestException:
+        return False
+
+def get_user_orders(token):
+    """Obtiene los pedidos del usuario autenticado o todos si es administrador"""
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        response = requests.get(f"{API_URL}/orders", headers=headers)
+        return response.json() if response.status_code == 200 else []
+    except requests.exceptions.RequestException:
+        return []

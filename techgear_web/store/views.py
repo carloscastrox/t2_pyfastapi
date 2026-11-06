@@ -1,7 +1,11 @@
+
+import base64
+import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .services import get_products, authenticate_user, create_product, register_user
+from .services import get_products, authenticate_user, create_product, register_user, get_user_orders, create_order
 from .forms import LoginForm, ProductForm, RegisterForm
+
 
 def product_list_view(request):
     """Vista principal: Muestra el catálogo de productos"""
@@ -23,8 +27,24 @@ def register_view(request):
         form = RegisterForm()
     return render(request, 'register.html', {'form': form})
 
+import base64
+import json
+
+def decode_jwt_payload(token):
+    """Decodifica el payload de un token JWT sin necesidad de librerías externas"""
+    try:
+        parts = token.split('.')
+        if len(parts) != 3:
+            return {}
+        payload_enc = parts[1]
+        padded = payload_enc + '=' * (-len(payload_enc) % 4)
+        decoded_bytes = base64.urlsafe_b64decode(padded)
+        return json.loads(decoded_bytes.decode('utf-8'))
+    except Exception:
+        return {}
+
 def login_view(request):
-    """Vista de inicio de sesión para almacenar el JWT en la sesión de Django"""
+    """Vista de inicio de sesión para almacenar el JWT y el rol en la sesión de Django"""
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -34,6 +54,11 @@ def login_view(request):
             if token:
                 request.session['access_token'] = token
                 request.session['username'] = username
+                
+                # Extraer y guardar el rol del usuario desde el token JWT
+                payload = decode_jwt_payload(token)
+                request.session['role'] = payload.get('role', 'cliente')
+                
                 messages.success(request, "¡Bienvenido a TechGear!")
                 return redirect('product_list')
             else:
@@ -67,3 +92,44 @@ def admin_dashboard_view(request):
         form = ProductForm()
     
     return render(request, 'admin_dashboard.html', {'form': form})
+
+
+# Pedidos del cliente
+
+def mis_pedidos_view(request):
+    token = request.session.get("access_token")
+    if not token:
+        return redirect("login")
+    
+    orders = get_user_orders(token)
+    
+    # Calcular el total de unidades en Django por seguridad
+    for order in orders:
+        items = order.get("items", [])
+        total_qty = sum(item.get("quantity", 1) for item in items)
+        order["total_quantity"] = total_qty
+        
+    return render(request, "my_orders.html", {"orders": orders})
+
+def procesar_pedido_view(request):
+    token = request.session.get("access_token")
+    if not token:
+        return redirect("login")
+    
+    if request.method == "POST":
+        product_id = request.POST.get("product_id")
+        quantity = int(request.POST.get("quantity", 1))
+        
+        # Estructura requerida por OrderItem
+        items_data = [
+            {
+                "product_id": product_id,
+                "quantity": quantity
+            }
+        ]
+        
+        success = create_order(items_data, token)
+        if success:
+            return redirect("my_orders")
+            
+    return redirect("product_list")

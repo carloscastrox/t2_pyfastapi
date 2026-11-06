@@ -10,7 +10,7 @@ from bson import ObjectId
 from db.database import database
 from models.product_model import ProductSchema, ProductUpdateSchema
 from models.users_model import UserSchema, TokenSchema
-from models.orders_model import OrderSchema
+from models.orders_model import OrderItem, OrderSchema
 
 # --- CONFIGURACIÓN DE SEGURIDAD Y JWT ---
 SECRET_KEY = "tu_clave_secreta_super_segura"
@@ -20,6 +20,17 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+def order_helper(order) -> dict:
+    total_quantity = sum(item.get("quantity", 1) for item in order.get("items", []))
+    return {
+        "id": str(order["_id"]),
+        "user_id": order["user_id"],
+        "items": order["items"],
+        "total_quantity": total_quantity,  # <--- Esta línea es la que alimenta la vista
+        "total_price": order["total_price"],
+        "status": order["status"]
+    }
+    
 # --- UTILIDADES DE CONTRASEÑAS Y TOKENS (DEFINIDAS PRIMERO) ---
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -203,17 +214,49 @@ async def delete_product(id: str, current_user: dict = Depends(get_current_user)
     raise HTTPException(status_code=404, detail="Producto no encontrado")
 
 
-# --- ENDPOINTS DE PEDIDOS ---
+# --- ENDPOINTS DE PEDIDOS ACTUALIZADOS ---
 @app.post("/orders", response_description="Crear un pedido", status_code=status.HTTP_201_CREATED, tags=["Pedidos"])
-async def create_order(order: OrderSchema, current_user: dict = Depends(get_current_user)):
-    order_dict = order.model_dump()
+async def create_order(items: List[OrderItem], current_user: dict = Depends(get_current_user)):
+    total_price = 0.0
+    validated_items = []
+    
+    for item in items:
+        if not ObjectId.is_valid(item.product_id):
+            raise HTTPException(status_code=400, detail="ID de producto inválido")
+        
+        product = await database.products.find_one({"_id": ObjectId(item.product_id)})
+        if not product:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        
+        if product["stock"] < item.quantity:
+            raise HTTPException(status_code=400, detail=f"Stock insuficiente para {product['name']}")
+        
+        # Descontar stock automáticamente
+        await database.products.update_one(
+            {"_id": ObjectId(item.product_id)},
+            {"$inc": {"stock": -item.quantity}}
+        )
+        
+        total_price += product["price"] * item.quantity
+        validated_items.append({"product_id": item.product_id, "quantity": item.quantity})
+
+    order_dict = {
+        "user_id": current_user["id"],  # Asociado automáticamente al usuario logueado
+        "items": validated_items,
+        "total_price": total_price,
+        "status": "pendiente"
+    }
+    
     new_order = await database.orders.insert_one(order_dict)
     created_order = await database.orders.find_one({"_id": new_order.inserted_id})
     return order_helper(created_order)
 
 @app.get("/orders", response_description="Listar pedidos", response_model=List[dict], tags=["Pedidos"])
 async def get_orders(current_user: dict = Depends(get_current_user)):
+    # Si es administrador ve todos; si es cliente, solo sus propios pedidos
+    query = {} if current_user["role"] == "administrador" else {"user_id": current_user["id"]}
+    
     orders = []
-    async for order in database.orders.find():
+    async for order in database.orders.find(query):
         orders.append(order_helper(order))
     return orders

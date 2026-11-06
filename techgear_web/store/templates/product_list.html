@@ -1,24 +1,34 @@
 {% extends 'base.html' %}
 {% block content %}
-<main>
-    <h2 class="mb-4">Catálogo de Productos Tecnológicos</h2>
-    <div class="row">
-        {% for product in products %}
-        <div class="col-md-3 mb-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="card-img-top">
-                    <span class="badge bg-secondary mb-2">{{ product.category }}</span>
-                    <p class="h5 card-title">{{ product.name }}</p>
-                    <p class="card-text text-muted">{{ product.description }}</p>
-                    <p class="h6 text-success">${{ product.price }}</p>
-                    <small class="text-muted">Stock disponible: {{ product.stock }}</small>
-                </div>
+<h2 class="mb-4">Catálogo de Productos Tecnológicos</h2>
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-3 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="card-img-top">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">{{ product.description }}</p>
+                <p class="text-primary fw-bold">${{ product.price }}</p>
+                <p class="text-muted small">Disponibles: {{ product.stock }}</p>
+
+                {% if request.session.access_token %}
+                <!-- Formulario para ordenar directamente una cantidad -->
+                <form action="{% url 'new_order' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <div class="input-group mb-3">
+                        <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"
+                            class="form-control" required>
+                        <button class="btn btn-success" type="submit">Agregar</button>
+                    </div>
+                </form>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Agregar pedido</a>
+                {% endif %}
             </div>
         </div>
-        {% empty %}
-        <p>No hay productos disponibles en este momento o la API está desconectada.</p>
-        {% endfor %}
     </div>
-</main>
+    {% endfor %}
+</div>
 {% endblock %}

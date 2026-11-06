@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Mis Pedidos Realizados</h2>
+    <hr>
+    {% if orders %}
+        <div class="list-group">
+            {% for order in orders %}
+                <div class="list-group-item list-group-item-action mb-3 shadow-sm">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">Pedido ID: {{ order.id }}</h5>
+                        <span class="badge bg-warning text-dark align-self-center">{{ order.status }}</span>
+                    </div>
+                    <p class="mb-1"><strong>Total a Pagar:</strong> ${{ order.total_price }}</p>
+                    
+                    <!-- Muestra el total de unidades calculado desde Django -->
+                    <small class="text-muted">Total de unidades compradas: <strong>{{ order.total_quantity }}</strong></small>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">Aún no has realizado ningún pedido.</div>
+    {% endif %}
+</div>
+{% endblock %}
