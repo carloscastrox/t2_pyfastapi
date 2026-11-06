@@ -13,7 +13,7 @@ from models.users_model import UserSchema, TokenSchema
 from models.orders_model import OrderSchema
 
 # --- CONFIGURACIÓN DE SEGURIDAD Y JWT ---
-SECRET_KEY = "tu_clave_secreta_super_segura_cambiala_en_produccion"
+SECRET_KEY = "tu_clave_secreta_super_segura"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

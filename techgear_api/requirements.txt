@@ -4,7 +4,8 @@ motor
 pydantic
 python-dotenv
 email-validator
-python-jose[cryptography]
-passlib[bcrypt]
+python-jose
+passlib
 bcrypt<4.1.0
 python-multipart
+requests
